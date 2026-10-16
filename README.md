@@ -6,8 +6,12 @@ D3.js (v7) visualizations of Hong Kong daily temperature data (`temperature_dail
 
 | File | Description |
 |------|-------------|
-| `level1.html` | Level 1: year/month heatmap of monthly max or min temperature (1997–2017) |
-| `level2.html` | Level 2: same heatmap for the last 10 years (2008–2017), with a mini line chart of daily max/min in each cell |
+| `level1.html` | Level 1 page: year/month heatmap of monthly max or min temperature (1997–2017) |
+| `level2.html` | Level 2 page: same heatmap for the last 10 years (2008–2017), with a mini line chart of daily max/min in each cell |
+| `js/common.js` | Shared config and reusable functions (data loading/aggregation, scales, axes, legend, tooltip, max/min toggle) |
+| `js/level1.js` | Level 1 config and drawing logic |
+| `js/level2.js` | Level 2 config and drawing logic (mini line charts, day marker, line legend) |
+| `css/style.css` | Shared styles |
 | `temperature_daily.csv` | Source data (`date`, `max_temperature`, `min_temperature`) |
 | `level1.md` | Assignment instructions |
 
@@ -41,3 +45,11 @@ An internet connection is needed to load D3 from the CDN.
   - Green line = daily max, light blue line = daily min.
   - All cells share one temperature scale, so lines are comparable across cells.
 - Hover shows the monthly max/min plus the values of the day under the cursor.
+
+## Configuration
+
+Settings live in config objects at the top of each script:
+
+- `SHARED_CONFIG` (`js/common.js`): color domain/bins, legend size, cell padding, tooltip offset, transition time, modes.
+- `LEVEL1_CONFIG` (`js/level1.js`): cell size and margins.
+- `LEVEL2_CONFIG` (`js/level2.js`): number of years shown, cell size, line series (field, label, color), line width.
