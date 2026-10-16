@@ -3,130 +3,17 @@
 <head>
 <meta charset="utf-8">
 <title>Level 1 – Hong Kong Monthly Temperature Heatmap</title>
+<link rel="stylesheet" href="css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-<style>
-  body { margin: 20px; font: 12px sans-serif; color: #222; background: #fff; }
-  h1 { font-size: 18px; margin: 0 0 4px; }
-  p.hint { margin: 0 0 12px; color: #666; }
-  .controls { margin-bottom: 10px; }
-  .controls button {
-    font: inherit; padding: 5px 12px; margin-right: 6px; cursor: pointer;
-    border: 1px solid #bbb; border-radius: 4px; background: #fff;
-  }
-  .controls button.active { background: #333; color: #fff; border-color: #333; }
-  .cell { cursor: pointer; }
-  .cell:hover { stroke: #333; stroke-width: 2; }
-  .legend text { font-size: 12px; }
-  #tooltip {
-    position: absolute; pointer-events: none; display: none;
-    background: #fff; border: 1px solid #ccc; border-radius: 3px;
-    padding: 6px 10px; box-shadow: 0 2px 6px rgba(0,0,0,.15); white-space: nowrap;
-  }
-</style>
 </head>
 <body>
 <h1>Hong Kong Monthly Temperature (1997–2017)</h1>
 <p class="hint">Click any cell (or the buttons) to switch between monthly maximum and minimum temperature.</p>
-<div class="controls">
-  <button data-mode="max" class="active">Max temperature</button>
-  <button data-mode="min">Min temperature</button>
-</div>
+<div class="controls"></div>
 <svg id="chart"></svg>
 <div id="tooltip"></div>
 
-<script>
-const MONTHS = ["January", "February", "March", "April", "May", "June",
-                "July", "August", "September", "October", "November", "December"];
-const parseDate = d3.timeParse("%Y-%m-%d");
-let mode = "max";
-
-d3.csv("temperature_daily.csv", d => ({
-  date: parseDate(d.date),
-  max: +d.max_temperature,
-  min: +d.min_temperature
-})).then(raw => {
-  // One record per (year, month): highest daily max and lowest daily min of that month
-  const data = d3.flatRollup(raw,
-      v => ({ max: d3.max(v, d => d.max), min: d3.min(v, d => d.min) }),
-      d => d.date.getFullYear(),
-      d => d.date.getMonth())
-    .map(([year, month, agg]) => ({ year, month, ...agg }));
-
-  const years = d3.range(d3.min(data, d => d.year), d3.max(data, d => d.year) + 1);
-
-  // Layout
-  const cellW = 40, cellH = 32, pad = 0.12;
-  const margin = { top: 30, right: 110, bottom: 10, left: 80 };
-  const width = years.length * cellW;
-  const height = 12 * cellH;
-
-  const svg = d3.select("#chart")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom);
-  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-  const x = d3.scaleBand().domain(years).range([0, width]).padding(pad);
-  const y = d3.scaleBand().domain(d3.range(12)).range([0, height]).padding(pad);
-
-  g.append("g").call(d3.axisTop(x).tickSizeOuter(0));
-  g.append("g").call(d3.axisLeft(y).tickFormat(m => MONTHS[m]).tickSizeOuter(0));
-
-  // Color: 0–40 °C, quantized reversed Spectral (blue = cold, red = hot)
-  const N_BINS = 11;
-  const color = d3.scaleQuantize()
-    .domain([0, 40])
-    .range(d3.quantize(t => d3.interpolateSpectral(1 - t), N_BINS));
-
-  // Tooltip
-  const tip = d3.select("#tooltip");
-  const fmtMonth = d => `${d.year}-${String(d.month + 1).padStart(2, "0")}`;
-
-  const cells = g.selectAll("rect.cell")
-    .data(data)
-    .join("rect")
-      .attr("class", "cell")
-      .attr("x", d => x(d.year))
-      .attr("y", d => y(d.month))
-      .attr("width", x.bandwidth())
-      .attr("height", y.bandwidth())
-      .on("mouseover", (event, d) => {
-        tip.style("display", "block")
-           .html(`Date: ${fmtMonth(d)}; max: ${d.max} min: ${d.min}`);
-      })
-      .on("mousemove", event => {
-        tip.style("left", (event.pageX + 12) + "px")
-           .style("top", (event.pageY - 28) + "px");
-      })
-      .on("mouseout", () => tip.style("display", "none"))
-      .on("click", () => setMode(mode === "max" ? "min" : "max"));
-
-  // Legend: one swatch per color bin
-  const swH = 22, swW = 18;
-  const legend = svg.append("g")
-    .attr("class", "legend")
-    .attr("transform", `translate(${margin.left + width + 20},${margin.top})`);
-
-  legend.selectAll("rect")
-    .data(color.range())
-    .join("rect")
-      .attr("y", (d, i) => i * swH)
-      .attr("width", swW)
-      .attr("height", swH)
-      .attr("fill", d => d);
-
-  legend.append("text").attr("x", swW + 6).attr("y", 10).text("0 Celsius");
-  legend.append("text").attr("x", swW + 6).attr("y", N_BINS * swH).text("40 Celsius");
-
-  function setMode(m) {
-    mode = m;
-    d3.selectAll(".controls button")
-      .classed("active", function () { return this.dataset.mode === m; });
-    cells.transition().duration(400).attr("fill", d => color(d[mode]));
-  }
-
-  d3.selectAll(".controls button").on("click", function () { setMode(this.dataset.mode); });
-  setMode("max");
-});
-</script>
+<script src="js/common.js"></script>
+<script src="js/level1.js"></script>
 </body>
 </html>
